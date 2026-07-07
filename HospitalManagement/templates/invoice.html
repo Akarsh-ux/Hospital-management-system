@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ bill.invoice_no }}{% endblock %}
+{% block page_title %}Invoice {{ bill.invoice_no }}{% endblock %}
+
+{% block content %}
+<div class="panel invoice-box" id="invoiceArea" style="max-width:800px; margin:0 auto;">
+  <div class="invoice-header">
+    <div>
+      <img src="{{ url_for('static', filename='logo.png') }}" height="50" alt="logo">
+      <h4 class="mt-2 mb-0">{{ hospital_name }}</h4>
+      <p class="text-muted mb-0">123 Wellness Avenue, Health City</p>
+      <p class="text-muted">contact@hospital.local &middot; +1 (555) 123-4567</p>
+    </div>
+    <div class="text-end">
+      <h3>INVOICE</h3>
+      <p class="mb-0"><strong>No:</strong> {{ bill.invoice_no }}</p>
+      <p class="mb-0"><strong>Date:</strong> {{ bill.created_at }}</p>
+      <span class="badge {{ 'text-bg-success' if bill.payment_status=='Paid' else ('text-bg-warning' if bill.payment_status=='Partial' else 'text-bg-danger') }}">{{ bill.payment_status }}</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h6>Billed To</h6>
+      <p class="mb-0"><strong>{{ bill.patient_name }}</strong></p>
+      <p class="mb-0">MRN: {{ bill.mrn }}</p>
+      <p class="mb-0">{{ bill.age or '-' }} yrs, {{ bill.gender }}</p>
+      <p class="mb-0">{{ bill.phone }}</p>
+      <p>{{ bill.address }}</p>
+    </div>
+  </div>
+
+  <table class="table table-bordered mt-3">
+    <thead class="table-light">
+      <tr><th>Description</th><th class="text-end">Amount (₹)</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Consultation Fee</td><td class="text-end">{{ "%.2f"|format(bill.consultation_fee) }}</td></tr>
+      <tr><td>Medicine Charges</td><td class="text-end">{{ "%.2f"|format(bill.medicine_charge) }}</td></tr>
+      <tr><td>Lab / Diagnostic Charges</td><td class="text-end">{{ "%.2f"|format(bill.lab_charge) }}</td></tr>
+      <tr><td>Room Charges</td><td class="text-end">{{ "%.2f"|format(bill.room_charge) }}</td></tr>
+      <tr><td>Other Charges</td><td class="text-end">{{ "%.2f"|format(bill.other_charge) }}</td></tr>
+      <tr><td>Discount</td><td class="text-end">- {{ "%.2f"|format(bill.discount) }}</td></tr>
+      <tr><td>Tax ({{ bill.tax_percent }}%)</td><td class="text-end">{{ "%.2f"|format(bill.total_amount - (bill.consultation_fee + bill.medicine_charge + bill.lab_charge + bill.room_charge + bill.other_charge - bill.discount)) }}</td></tr>
+    </tbody>
+    <tfoot>
+      <tr class="table-light"><th>Total Amount</th><th class="text-end">₹ {{ "%.2f"|format(bill.total_amount) }}</th></tr>
+    </tfoot>
+  </table>
+
+  {% if bill.payment_method %}
+  <p><strong>Payment Method:</strong> {{ bill.payment_method }}</p>
+  {% endif %}
+
+  <p class="text-muted small mt-4 mb-0">This is a system-generated invoice and does not require a signature.</p>
+
+  <div class="mt-4 d-flex gap-2 no-print">
+    <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+    {% if bill.payment_status != 'Paid' and current_role in ['admin','receptionist'] %}
+    <form action="{{ url_for('mark_bill_paid', id=bill.id) }}" method="POST" class="d-flex gap-2">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <select name="payment_method" class="form-select form-select-sm">
+        <option>Cash</option><option>Card</option><option>UPI</option><option>Insurance</option><option>Bank Transfer</option>
+      </select>
+      <button class="btn btn-success"><i class="bi bi-check-circle"></i> Mark as Paid</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('bills') }}" class="btn btn-outline-secondary">Back to Bills</a>
+  </div>
+</div>
+{% endblock %}

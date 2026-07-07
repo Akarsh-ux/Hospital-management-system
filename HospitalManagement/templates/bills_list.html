@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Bills{% endblock %}
+{% block page_title %}Billing & Invoices{% endblock %}
+
+{% block content %}
+<div class="panel">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <form class="d-flex gap-2" method="GET">
+      <select name="status" class="form-select" style="width:160px">
+        <option value="">All Status</option>
+        {% for s in ['Paid','Unpaid','Partial'] %}
+        <option value="{{ s }}" {{ 'selected' if status_filter==s }}>{{ s }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-outline-primary"><i class="bi bi-funnel"></i> Filter</button>
+      {% if status_filter %}<a href="{{ url_for('bills') }}" class="btn btn-outline-secondary">Clear</a>{% endif %}
+    </form>
+    <a href="{{ url_for('billing') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Generate Bill</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr><th>Invoice No.</th><th>Patient</th><th>MRN</th><th>Amount</th><th>Status</th><th>Date</th><th class="text-end">Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for b in bills %}
+        <tr>
+          <td>{{ b.invoice_no }}</td>
+          <td>{{ b.patient_name }}</td>
+          <td>{{ b.mrn }}</td>
+          <td>₹{{ "%.2f"|format(b.total_amount) }}</td>
+          <td><span class="badge {{ 'text-bg-success' if b.payment_status=='Paid' else ('text-bg-warning' if b.payment_status=='Partial' else 'text-bg-danger') }}">{{ b.payment_status }}</span></td>
+          <td>{{ b.created_at }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('view_bill', id=b.id) }}" class="btn btn-sm btn-outline-secondary" title="View / Print"><i class="bi bi-eye"></i></a>
+            {% if current_role == 'admin' %}
+            <form action="{{ url_for('delete_bill', id=b.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this invoice?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No invoices found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

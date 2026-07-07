@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Staff' if staff and staff.id else 'Add Staff' }}{% endblock %}
+{% block page_title %}{{ 'Edit Staff Account' if staff and staff.id else 'Add Staff Account' }}{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:700px">
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Username *</label>
+        <input type="text" name="username" class="form-control" value="{{ staff.username if staff else '' }}" {{ 'readonly' if staff and staff.id }} required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="full_name" class="form-control" value="{{ staff.full_name if staff else '' }}" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Role *</label>
+        <select name="role" id="roleSelect" class="form-select" required>
+          <option value="">Select Role</option>
+          {% for r in ['admin','receptionist','doctor'] %}
+          <option value="{{ r }}" {{ 'selected' if staff and staff.role==r }}>{{ r|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6" id="doctorLinkField">
+        <label class="form-label">Linked Doctor Profile</label>
+        <select name="doctor_id" class="form-select">
+          <option value="">None</option>
+          {% for d in doctors %}
+          <option value="{{ d.id }}" {{ 'selected' if staff and staff.doctor_id==d.id }}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-control" value="{{ staff.email if staff else '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" class="form-control" value="{{ staff.phone if staff else '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">{{ 'New Password (leave blank to keep unchanged)' if staff and staff.id else 'Password *' }}</label>
+        <input type="password" name="password" class="form-control" minlength="8" {{ 'required' if not (staff and staff.id) }}>
+      </div>
+
+      {% if staff and staff.id %}
+      <div class="col-md-6 d-flex align-items-end">
+        <div class="form-check">
+          <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {{ 'checked' if staff.is_active }}>
+          <label class="form-check-label" for="isActive">Account Active</label>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Save Account</button>
+      <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function toggleDoctorField() {
+  const role = document.getElementById('roleSelect').value;
+  document.getElementById('doctorLinkField').style.display = (role === 'doctor') ? 'block' : 'none';
+}
+document.getElementById('roleSelect').addEventListener('change', toggleDoctorField);
+toggleDoctorField();
+</script>
+{% endblock %}

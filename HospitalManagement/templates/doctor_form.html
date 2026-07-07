@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Doctor' if doctor else 'Add Doctor' }}{% endblock %}
+{% block page_title %}{{ 'Edit Doctor' if doctor else 'Add New Doctor' }}{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:800px">
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Full Name *</label>
+        <input type="text" name="name" class="form-control" value="{{ doctor.name if doctor else '' }}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Gender</label>
+        <select name="gender" class="form-select">
+          <option value="">Select</option>
+          {% for g in ['Male','Female','Other'] %}
+          <option value="{{ g }}" {{ 'selected' if doctor and doctor.gender==g }}>{{ g }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Department</label>
+        <select name="department_id" class="form-select">
+          <option value="">Unassigned</option>
+          {% for dept in departments %}
+          <option value="{{ dept.id }}" {{ 'selected' if doctor and doctor.department_id==dept.id }}>{{ dept.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Specialization *</label>
+        <input type="text" name="specialization" class="form-control" value="{{ doctor.specialization if doctor else '' }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Qualification</label>
+        <input type="text" name="qualification" class="form-control" value="{{ doctor.qualification if doctor else '' }}" placeholder="e.g. MBBS, MD">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Experience (yrs)</label>
+        <input type="number" min="0" name="experience" class="form-control" value="{{ doctor.experience if doctor else 0 }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Consultation Fee (₹)</label>
+        <input type="number" min="0" step="0.01" name="consultation_fee" class="form-control" value="{{ doctor.consultation_fee if doctor else 0 }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Phone *</label>
+        <input type="text" name="phone" class="form-control" value="{{ doctor.phone if doctor else '' }}" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Email *</label>
+        <input type="email" name="email" class="form-control" value="{{ doctor.email if doctor else '' }}" required>
+      </div>
+
+      <div class="col-md-8">
+        <label class="form-label">Availability</label>
+        <input type="text" name="availability" class="form-control" value="{{ doctor.availability if doctor else '' }}" placeholder="e.g. Mon-Fri 9:00 AM - 4:00 PM">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Photo</label>
+        <input type="file" name="photo" class="form-control" accept="image/*">
+      </div>
+
+      {% if doctor %}
+      <div class="col-md-4">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          <option value="Active" {{ 'selected' if doctor.status=='Active' }}>Active</option>
+          <option value="Inactive" {{ 'selected' if doctor.status=='Inactive' }}>Inactive</option>
+        </select>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Save Doctor</button>
+      <a href="{{ url_for('doctors') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

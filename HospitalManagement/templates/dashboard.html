@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="kpi-grid">
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+    <div>
+      <h3>{{ patients }}</h3>
+      <p>Total Patients</p>
+    </div>
+    <a href="{{ url_for('patients') }}" class="kpi-link">View <i class="bi bi-arrow-right"></i></a>
+  </div>
+
+  <div class="kpi-card kpi-teal">
+    <div class="kpi-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+    <div>
+      <h3>{{ doctors }}</h3>
+      <p>Active Doctors</p>
+    </div>
+    <a href="{{ url_for('doctors') }}" class="kpi-link">View <i class="bi bi-arrow-right"></i></a>
+  </div>
+
+  <div class="kpi-card kpi-amber">
+    <div class="kpi-icon"><i class="bi bi-calendar-check-fill"></i></div>
+    <div>
+      <h3>{{ appointments_today }}</h3>
+      <p>Appointments Today</p>
+    </div>
+    <a href="{{ url_for('appointments') }}" class="kpi-link">View <i class="bi bi-arrow-right"></i></a>
+  </div>
+
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon"><i class="bi bi-cash-coin"></i></div>
+    <div>
+      <h3>₹{{ "%.2f"|format(revenue_month) }}</h3>
+      <p>Revenue This Month</p>
+    </div>
+    {% if current_role in ['admin','receptionist'] %}
+    <a href="{{ url_for('bills') }}" class="kpi-link">View <i class="bi bi-arrow-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-7">
+    <div class="panel">
+      <h5>Appointments - Last 7 Days</h5>
+      <canvas id="trendChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel">
+      <h5>Doctors by Department</h5>
+      <canvas id="deptChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="panel">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0">Upcoming Appointments</h5>
+        <a href="{{ url_for('appointments') }}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for a in upcoming %}
+            <tr>
+              <td>{{ a.patient_name }}</td>
+              <td>{{ a.doctor_name }}</td>
+              <td>{{ a.appointment_date }}</td>
+              <td>{{ a.appointment_time }}</td>
+              <td><span class="badge status-badge status-{{ a.status|lower }}">{{ a.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-3">No upcoming appointments.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="panel">
+      <h5>Billing Snapshot</h5>
+      <p class="text-muted mb-1">Pending / Unpaid Invoices</p>
+      <h2 class="text-danger">{{ pending_bills }}</h2>
+      {% if current_role in ['admin','receptionist'] %}
+      <a href="{{ url_for('bills', status='Unpaid') }}" class="btn btn-sm btn-outline-danger mt-2">Review Unpaid Bills</a>
+      <hr>
+      <a href="{{ url_for('billing') }}" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus-circle"></i> Generate New Bill</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const trendCtx = document.getElementById('trendChart');
+new Chart(trendCtx, {
+  type: 'line',
+  data: {
+    labels: {{ trend_labels|tojson }},
+    datasets: [{
+      label: 'Appointments',
+      data: {{ trend_values|tojson }},
+      borderColor: '#16A085',
+      backgroundColor: 'rgba(22,160,133,0.15)',
+      tension: 0.35,
+      fill: true,
+      pointRadius: 4,
+    }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+});
+
+const deptCtx = document.getElementById('deptChart');
+new Chart(deptCtx, {
+  type: 'doughnut',
+  data: {
+    labels: {{ dept_labels|tojson }},
+    datasets: [{
+      data: {{ dept_values|tojson }},
+      backgroundColor: ['#2C3E50','#16A085','#F39C12','#E74C3C','#8E44AD','#2980B9'],
+    }]
+  },
+  options: { plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+{% endblock %}

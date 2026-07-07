@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Appointment' if appointment and appointment.id else 'Book Appointment' }}{% endblock %}
+{% block page_title %}{{ 'Edit Appointment' if appointment and appointment.id else 'Book New Appointment' }}{% endblock %}
+
+{% block content %}
+<div class="panel" style="max-width:800px">
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Patient *</label>
+        <select name="patient_id" class="form-select" required {{ 'disabled' if current_role=='doctor' }}>
+          <option value="">Select Patient</option>
+          {% for p in patients %}
+          <option value="{{ p.id }}" {{ 'selected' if appointment and appointment.patient_id==p.id }}>{{ p.name }} ({{ p.mrn }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Doctor *</label>
+        <select name="doctor_id" class="form-select" required {{ 'disabled' if current_role=='doctor' }}>
+          <option value="">Select Doctor</option>
+          {% for d in doctors %}
+          <option value="{{ d.id }}" {{ 'selected' if appointment and appointment.doctor_id==d.id }}>{{ d.name }} - {{ d.specialization }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">Date *</label>
+        <input type="date" name="appointment_date" class="form-control" value="{{ appointment.appointment_date if appointment else '' }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Time *</label>
+        <input type="time" name="appointment_time" class="form-control" value="{{ appointment.appointment_time if appointment else '' }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+          {% for s in ['Scheduled','Completed','Cancelled','No-show'] %}
+          <option value="{{ s }}" {{ 'selected' if appointment and appointment.status==s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Reason for Visit</label>
+        <input type="text" name="reason" class="form-control" value="{{ appointment.reason if appointment else '' }}">
+      </div>
+
+      {% if appointment and appointment.id %}
+      <div class="col-12"><hr><h6>Clinical Notes (Doctor)</h6></div>
+      <div class="col-md-6">
+        <label class="form-label">Diagnosis</label>
+        <input type="text" name="diagnosis" class="form-control" value="{{ appointment.diagnosis or '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Prescription</label>
+        <input type="text" name="prescription" class="form-control" value="{{ appointment.prescription or '' }}">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Additional Notes</label>
+        <textarea name="notes" class="form-control" rows="2">{{ appointment.notes or '' }}</textarea>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> Save Appointment</button>
+      <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Prevent selecting a past date for new appointments
+  const dateInput = document.querySelector('input[name="appointment_date"]');
+  if (dateInput && !dateInput.value) {
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+</script>
+{% endblock %}
